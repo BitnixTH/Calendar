@@ -1,50 +1,76 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8" />
-<title>DIA: CONN Activities</title>
+<meta charset="utf-8">
+<title>DIA CONN Events</title>
 
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
-
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet"/>
 
 <style>
-body {
-  margin:0;
-  font-family: Arial;
-  background: linear-gradient(#ffd1eb,#cfa3ff);
+body{
+margin:0;
+font-family:system-ui;
+background:#f5f6fb;
+padding:20px;
+color:#2563eb;
 }
 
-.wrapper {
-  background:white;
-  margin:40px;
-  padding:30px;
-  border-radius:24px;
+.wrapper{
+max-width:1300px;
+margin:auto;
+background:white;
+border-radius:24px;
+padding:20px;
+box-shadow:0 20px 40px #0002;
 }
 
-.toolbar {
-  display:flex;
-  gap:10px;
-  margin-bottom:20px;
+.toolbar{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+margin-bottom:10px;
 }
 
-button {
-  padding:8px 16px;
-  border-radius:10px;
-  border:2px solid #4b5cff;
-  background:white;
-  color:#4b5cff;
-  cursor:pointer;
+select,button{
+padding:6px 12px;
+border-radius:10px;
+border:1px solid #ccc;
+background:white;
+cursor:pointer;
+color:#2563eb;
 }
 
-button.active {
-  background:#4b5cff;
-  color:white;
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+gap:12px;
+margin-top:12px;
 }
 
-#calendar {
-  margin-top:20px;
+.card{
+padding:12px;
+border-radius:14px;
+color:#2563eb;
+box-shadow:0 6px 14px #0002;
 }
+
+.blue{background:linear-gradient(135deg,#dbeafe,#93c5fd)}
+.pink{background:linear-gradient(135deg,#fbcfe8,#f9a8d4)}
+.green{background:linear-gradient(135deg,#dcfce7,#86efac)}
+.yellow{background:linear-gradient(135deg,#fef9c3,#fde047)}
+
+.title{font-weight:700}
+.meta{font-size:13px}
+
+iframe{
+width:100%;
+height:450px;
+border:0;
+margin-top:20px;
+border-radius:18px;
+}
+
+#calendar{margin-top:20px}
 </style>
 </head>
 
@@ -52,48 +78,124 @@ button.active {
 
 <div class="wrapper">
 
-<h2>DIA: CONN Activities</h2>
+<h2>DIA : CONN Activities</h2>
 
 <div class="toolbar">
-  <button id="calendarBtn" class="active">Calendar</button>
-  <button id="listBtn">List</button>
+<button id="prev">← Prev</button>
+<button id="next">Next →</button>
+
+<select id="range">
+<option value="day">Day</option>
+<option value="week">Week</option>
+<option value="month" selected>Month</option>
+<option value="year">Year</option>
+<option value="all">Schedule</option>
+</select>
+
+<select id="view">
+<option value="calendar">Calendar</option>
+<option value="list">List</option>
+<option value="both" selected>Both</option>
+</select>
 </div>
+
+<div id="cards" class="cards"></div>
 
 <div id="calendar"></div>
 
+<iframe id="gcal"></iframe>
+
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+const CAL_ID="parknahpus.bitnix@gmail.com";
+const API_KEY="AIzaSyDO5Iqc2-P814zb7Zrg08F1T-qLKVOapbY";
 
-  var calendarEl = document.getElementById('calendar');
+let cursor=new Date();
+let fc;
 
-  var calendar = new FullCalendar.Calendar(calendarEl, {
-    initialView: 'dayGridMonth',
-    height: 'auto',
+function category(t){
+ if(t.includes("Meeting with G2E")) return "blue";
+ if(t.includes("Chulalongkorn Hospital")) return "pink";
+ if(t.includes("Bangkok Hospital")) return "green";
+ if(t.includes("Set up booth")) return "yellow";
+ return "blue";
+}
 
-    events: [
-      { title: 'Meeting DIA', start: '2026-02-05' },
-      { title: 'Hospital Demo', start: '2026-02-10' },
-      { title: 'System Review', start: '2026-02-18' }
-    ]
-  });
+function getRange(type){
+ const s=new Date(cursor),e=new Date(cursor);
+ if(type==="day"){}
+ else if(type==="week"){s.setDate(s.getDate()-s.getDay());e.setDate(s.getDate()+6);}
+ else if(type==="month"){s.setDate(1);e.setMonth(s.getMonth()+1);e.setDate(0);}
+ else if(type==="year"){s.setMonth(0,1);e.setMonth(11,31);}
+ else{s.setFullYear(1970);e.setFullYear(3000);}
+ return{start:s,end:e};
+}
 
-  calendar.render();
+async function load(){
+ const r=getRange(range.value);
+ const u=new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CAL_ID)}/events`);
+ u.searchParams.set("key",API_KEY);
+ u.searchParams.set("singleEvents","true");
+ u.searchParams.set("orderBy","startTime");
+ u.searchParams.set("timeMin",r.start.toISOString());
+ u.searchParams.set("timeMax",r.end.toISOString());
 
-  document.getElementById("calendarBtn").onclick = () => {
-    calendar.changeView('dayGridMonth');
-    calendarBtn.classList.add("active");
-    listBtn.classList.remove("active");
-  };
+ const d=await fetch(u).then(x=>x.json());
+ const ev=(d.items||[]).map(e=>({
+   title:e.summary,
+   start:e.start.dateTime||e.start.date,
+   end:e.end.dateTime||e.end.date
+ }));
 
-  document.getElementById("listBtn").onclick = () => {
-    calendar.changeView('listMonth');
-    listBtn.classList.add("active");
-    calendarBtn.classList.remove("active");
-  };
+ renderCards(ev);
+ renderCalendar(ev);
+ renderIframe();
+}
 
-});
+function renderCards(ev){
+ cards.innerHTML="";
+ if(view.value==="calendar") return;
+
+ ev.forEach(e=>{
+   const c=document.createElement("div");
+   c.className="card "+category(e.title);
+   c.innerHTML=`<div class="title">${e.title}</div>
+                <div class="meta">${new Date(e.start).toLocaleString()}</div>`;
+   cards.appendChild(c);
+ });
+}
+
+function renderCalendar(ev){
+ if(view.value==="list") return;
+
+ if(!fc){
+   fc=new FullCalendar.Calendar(calendar,{
+     initialView:"dayGridMonth",
+     headerToolbar:false,
+     events:ev
+   });
+   fc.render();
+ }else{
+   fc.removeAllEvents();
+   ev.forEach(x=>fc.addEvent(x));
+ }
+}
+
+function renderIframe(){
+ const d1=`${cursor.getFullYear()}${String(cursor.getMonth()+1).padStart(2,"0")}01`;
+ const d2=`${cursor.getFullYear()}${String(cursor.getMonth()+2).padStart(2,"0")}01`;
+ gcal.src=`https://calendar.google.com/calendar/embed?src=${CAL_ID}&ctz=Asia/Bangkok&mode=MONTH&hl=en&dates=${d1}/${d2}`;
+}
+
+prev.onclick=()=>{cursor.setMonth(cursor.getMonth()-1);load();}
+next.onclick=()=>{cursor.setMonth(cursor.getMonth()+1);load();}
+range.onchange=load;
+view.onchange=load;
+
+load();
 </script>
 
 </body>
