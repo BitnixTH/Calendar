@@ -1,214 +1,99 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8"/>
-<title>DIACONN Events</title>
+<meta charset="UTF-8" />
+<title>DIA: CONN Activities</title>
+
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet" />
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
 
 <style>
-:root{
---blue1:#93c5fd; --blue2:#3b82f6;
---pink1:#f9a8d4; --pink2:#ec4899;
---green1:#bbf7d0; --green2:#22c55e;
---yellow1:#fde68a; --yellow2:#f59e0b;
---ink:#1d4ed8;
+body {
+  margin:0;
+  font-family: Arial;
+  background: linear-gradient(#ffd1eb,#cfa3ff);
 }
 
-body{
-margin:0;
-font-family:system-ui;
-background:linear-gradient(180deg,#ffb6e6,#c78cff);
-padding:24px;
+.wrapper {
+  background:white;
+  margin:40px;
+  padding:30px;
+  border-radius:24px;
 }
 
-.frame3d{
-background:white;
-border-radius:28px;
-padding:20px;
-max-width:1200px;
-margin:auto;
+.toolbar {
+  display:flex;
+  gap:10px;
+  margin-bottom:20px;
 }
 
-h1{color:var(--ink)}
-
-.toolbar{
-display:flex;
-gap:10px;
-flex-wrap:wrap;
-align-items:center;
-margin-bottom:10px;
+button {
+  padding:8px 16px;
+  border-radius:10px;
+  border:2px solid #4b5cff;
+  background:white;
+  color:#4b5cff;
+  cursor:pointer;
 }
 
-select,button{
-border-radius:12px;
-padding:6px 12px;
-border:2px solid #7c5cff;
-background:white;
-color:var(--ink);
-font-weight:600;
-cursor:pointer;
+button.active {
+  background:#4b5cff;
+  color:white;
 }
 
-.cards{
-display:grid;
-grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-gap:12px;
-margin-top:12px;
+#calendar {
+  margin-top:20px;
 }
-
-.card{
-border-radius:16px;
-padding:12px 12px 50px;
-color:var(--ink);
-position:relative;
-}
-
-.blue{background:linear-gradient(135deg,var(--blue1),var(--blue2))}
-.pink{background:linear-gradient(135deg,var(--pink1),var(--pink2))}
-.green{background:linear-gradient(135deg,var(--green1),var(--green2))}
-.yellow{background:linear-gradient(135deg,var(--yellow1),var(--yellow2))}
-
-.card *{color:#1d4ed8}
-
-.title{font-weight:800;margin-bottom:6px}
-.meta{font-size:13px}
-
-.calbtn{
-position:absolute;
-right:10px;
-bottom:10px;
-background:#1d4ed8;
-color:white;
-border:none;
-border-radius:50%;
-width:38px;height:38px;
-}
-
-iframe{width:100%;height:480px;border:0;border-radius:20px;margin-top:12px}
-
-.hidden{display:none}
 </style>
 </head>
 
 <body>
 
-<div class="frame3d">
+<div class="wrapper">
 
-<h1>DIA: CONN Activities</h1>
+<h2>DIA: CONN Activities</h2>
 
 <div class="toolbar">
-
-<select id="range">
-<option value="day">Day</option>
-<option value="week">Week</option>
-<option value="month" selected>Month</option>
-<option value="year">Year</option>
-<option value="schedule">Schedule</option>
-</select>
-
-<select id="view">
-<option value="both">Both</option>
-<option value="list">List</option>
-<option value="calendar">Calendar</option>
-</select>
-
-<button id="prev">◀</button>
-<button id="next">▶</button>
-
-<span id="label"></span>
-
+  <button id="calendarBtn" class="active">Calendar</button>
+  <button id="listBtn">List</button>
 </div>
 
-<div id="cards" class="cards"></div>
-
-<iframe id="gcal"></iframe>
+<div id="calendar"></div>
 
 </div>
 
 <script>
-const CAL_ID="parknahpus.bitnix@gmail.com";
-const API_KEY="AIzaSyDO5Iqc2-P814zb7Zrg08F1T-qLKVOapbY";
+document.addEventListener('DOMContentLoaded', function () {
 
-const TYPES=[
-{key:"Meeting with G2E",cls:"blue"},
-{key:"Chulalongkorn Hospital",cls:"pink"},
-{key:"Bangkok Hospital",cls:"green"},
-{key:"Set up booth",cls:"yellow"},
-];
+  var calendarEl = document.getElementById('calendar');
 
-let cursor=new Date();
+  var calendar = new FullCalendar.Calendar(calendarEl, {
+    initialView: 'dayGridMonth',
+    height: 'auto',
 
-function pad(n){return String(n).padStart(2,"0")}
-function ymd(d){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())}
+    events: [
+      { title: 'Meeting DIA', start: '2026-02-05' },
+      { title: 'Hospital Demo', start: '2026-02-10' },
+      { title: 'System Review', start: '2026-02-18' }
+    ]
+  });
 
-function rangeDates(){
-let s=new Date(cursor),e=new Date(cursor);
-const r=range.value;
+  calendar.render();
 
-if(r==="day"){ }
-if(r==="week"){s.setDate(s.getDate()-s.getDay());e.setDate(s.getDate()+6)}
-if(r==="month"){s=new Date(cursor.getFullYear(),cursor.getMonth(),1);e=new Date(cursor.getFullYear(),cursor.getMonth()+1,0)}
-if(r==="year"){s=new Date(cursor.getFullYear(),0,1);e=new Date(cursor.getFullYear(),11,31)}
-if(r==="schedule"){s=new Date();e=new Date(2100,0,1)}
+  document.getElementById("calendarBtn").onclick = () => {
+    calendar.changeView('dayGridMonth');
+    calendarBtn.classList.add("active");
+    listBtn.classList.remove("active");
+  };
 
-return {s,e}
-}
+  document.getElementById("listBtn").onclick = () => {
+    calendar.changeView('listMonth');
+    listBtn.classList.add("active");
+    calendarBtn.classList.remove("active");
+  };
 
-function typeOf(t){
-return TYPES.find(x=>t.includes(x.key))
-}
-
-async function load(){
-const {s,e}=rangeDates();
-label.textContent=s.toLocaleDateString("en-US")+" → "+e.toLocaleDateString("en-US");
-
-const url=new URL(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CAL_ID)}/events`);
-url.searchParams.set("key",API_KEY);
-url.searchParams.set("singleEvents","true");
-url.searchParams.set("orderBy","startTime");
-url.searchParams.set("timeMin",s.toISOString());
-url.searchParams.set("timeMax",e.toISOString());
-
-const res=await fetch(url);
-const data=await res.json();
-
-cards.innerHTML="";
-
-(data.items||[]).forEach(ev=>{
-const t=typeOf(ev.summary||"");
-if(!t) return;
-
-const d=ev.start.dateTime?new Date(ev.start.dateTime):new Date(ev.start.date);
-
-const c=document.createElement("div");
-c.className="card "+t.cls;
-
-c.innerHTML=`
-<div class="title">${ev.summary}</div>
-<div class="meta">${d.toLocaleString("en-US")}</div>
-<button class="calbtn" onclick="window.open('${ev.htmlLink}')">📅</button>
-`;
-
-cards.appendChild(c);
 });
-
-const base="https://calendar.google.com/calendar/embed?src="+encodeURIComponent(CAL_ID)+"&ctz=Asia%2FBangkok&hl=en";
-gcal.src=base+"&dates="+ymd(s)+"/"+ymd(e);
-
-applyView();
-}
-
-function applyView(){
-if(view.value==="list"){gcal.classList.add("hidden");cards.classList.remove("hidden")}
-if(view.value==="calendar"){cards.classList.add("hidden");gcal.classList.remove("hidden")}
-if(view.value==="both"){cards.classList.remove("hidden");gcal.classList.remove("hidden")}
-}
-
-prev.onclick=()=>{cursor.setMonth(cursor.getMonth()-1);load()}
-next.onclick=()=>{cursor.setMonth(cursor.getMonth()+1);load()}
-range.onchange=load;
-view.onchange=applyView;
-
-load();
 </script>
 
 </body>
